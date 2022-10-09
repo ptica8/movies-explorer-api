@@ -1,10 +1,13 @@
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
-const User = require('../models/users');
 const jwt = require('jsonwebtoken');
+const User = require('../models/users');
+require('dotenv').config();
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const DuplicateError = require('../errors/DuplicateError');
+
+const { NODE_ENV, JWT_SECRET } = process.env;
 
 module.exports.getUser = (req, res, next) => {
   User.findById(req.user._id)
@@ -67,18 +70,18 @@ module.exports.createUser = (req, res, next) => {
           }
         }));
   }
-}
+};
 
-  module.exports.login = (req, res, next) => {
-    const { email, password } = req.body;
-    return User.findUserByCredentials(email, password)
-      .then((user) => {
-        const token = jwt.sign(
-          { _id: user._id },
-          'my-secret-key',
-          { expiresIn: '7d' },
-        );
-        res.send({ token });
-      })
-      .catch(next);
-  };
+module.exports.login = (req, res, next) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign(
+        { _id: user._id },
+        NODE_ENV === 'production' ? JWT_SECRET : 'my-secret-key',
+        { expiresIn: '7d' },
+      );
+      res.send({ token });
+    })
+    .catch(next);
+};
