@@ -2,10 +2,10 @@ const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const User = require('../models/users');
-require('dotenv').config();
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const DuplicateError = require('../errors/DuplicateError');
+const { myJWT } = require('../configs/index');
 
 const { NODE_ENV, JWT_SECRET } = process.env;
 
@@ -32,7 +32,9 @@ module.exports.updateUserInfo = (req, res, next) => {
       res.send({ data: updateUser });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.code === 11000) {
+        next(new DuplicateError('Пользователь с таким Email уже зарегистрирован'));
+      } else if (err.name === 'ValidationError') {
         next(new BadRequestError('Введены некорректные данные'));
       } else {
         next(err);
@@ -51,11 +53,8 @@ module.exports.createUser = (req, res, next) => {
       })
 
         .then((newUser) => {
-          // eslint-disable-next-line no-shadow,no-underscore-dangle
           res.send({
-            // eslint-disable-next-line max-len
             data: {
-              // eslint-disable-next-line max-len
               email: newUser.email, name: newUser.name, _id: newUser._id,
             },
           });
@@ -78,7 +77,7 @@ module.exports.login = (req, res, next) => {
     .then((user) => {
       const token = jwt.sign(
         { _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : 'my-secret-key',
+        NODE_ENV === 'production' ? JWT_SECRET : myJWT,
         { expiresIn: '7d' },
       );
       res.send({ token });
