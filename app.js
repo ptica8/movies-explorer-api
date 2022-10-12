@@ -24,8 +24,7 @@ app.use(cors());
 app.use(helmet());
 
 mongoose
-  .connect('mongodb://127.0.0.1:27017/moviesdb')
- // .connect(NODE_ENV === 'production' ? DB_PATH : mongoServer, { useNewUrlParser: true, useUnifiedTopology: true, family: 4 })
+  .connect(NODE_ENV === 'production' ? DB_PATH : mongoServer, { useNewUrlParser: true, useUnifiedTopology: true, family: 4 })
   .then(() => console.log('DB connected'))
   .catch((err) => console.log(err));
 
